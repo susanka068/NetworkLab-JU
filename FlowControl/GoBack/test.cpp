@@ -6,7 +6,13 @@
 #include <thread>
 #include "./CRC.hpp"
 
+
 using namespace std ; 
+
+
+#include <chrono> 
+using namespace std::chrono; 
+
 
 const int readEnd = 0 ;  
 const int writeEnd = 1 ;  
@@ -77,6 +83,8 @@ void  SenderProcess(){
 
 		close(SenderPipe[readEnd]);
 		close(ReceiverPipe[writeEnd]) ;
+
+		int count = 0 ; 
 
 
 		
@@ -151,11 +159,12 @@ void  SenderProcess(){
 			if(read(ReceiverPipe[readEnd] , response_array , 25*sizeof(int))==-1){  printf("failed to read from Receiver pipe\n"); }
 			else
 			{
-				if(response_array[5]==1 )
+				if(response_array[5]==1 && response_array[3]==sqno )
 				{
-					printf("ack received\n");
+						printf("ack received\n");
 						start += packet_size ; 
-						sqno = (sqno + 1 )%window_size ;  
+						sqno = (sqno + 1 )%window_size ;
+						count++ ;   
 				}
 				else
 				{
@@ -165,11 +174,14 @@ void  SenderProcess(){
 
 			//start += packet_size ; 
 			//cout<<"start : "<<start<<endl;
+			if( count >= window_size )
+				sleep(2);
 
 	}
 
 
-	int termination_array[25] = {127} ; 
+	int termination_array[25] = { 127 , 127 , 127 , 127 , 127 , 127 , 127 , 127 , 127 , 127 , 127 , 127 , 127 ,127 , 127 , 127 } ;
+	//memset(termination_array,27,sizeof(termination_array)); 
 
 	if( write(SenderPipe[writeEnd] , termination_array , 25*sizeof(int)) ==-1){ printf("failed to send\n"); }
 			else{
@@ -200,11 +212,15 @@ void ReceiverProcess(){
 		CRC det ; 
 		
 
-		while( data_array[0] != 127){	
+		while( true ){	
 			string data_string = "" ; 
 			if(read(SenderPipe[readEnd] , data_array , 25*sizeof(int) ) == -1){ printf("reading from Sender pipe failed\n"); }
 			else
 			{
+				if(data_array[5]==127){
+					printf("termination array received \n");
+					break ; 
+				}
 
 				cout<<"received data packet "<<endl;			
 				cout<<data_array[0]<<" | "<<data_array[1]<<" | "<<data_array[2]<<" | "<<data_array[3]<<" | "<<data_array[4]<<" | ";
@@ -233,7 +249,12 @@ void ReceiverProcess(){
 
 				if(!det.detect_error(data_string,"10011") || data_array[3] != sqno )
 				{
-					response_array[5] = 1 ; 
+					{
+						/* response array creating */
+						response_array[3] = data_array[3] ; 
+						response_array[5] = 1 ; 
+					}
+					
 					if(write(ReceiverPipe[writeEnd],response_array , 25*sizeof(int) )==-1){
 						printf("failed to send acknowledgement\n");
 					}
@@ -277,9 +298,16 @@ int main(int argc ,char* argv[]){
 	
 
 	if(pid == 0 ){
+
+		auto start = high_resolution_clock::now(); 
 		/* We are in child (Sender) process */ 
 		SenderInitialise();
 		SenderProcess();
+		auto stop = high_resolution_clock::now(); 
+		auto duration = duration_cast<microseconds>(stop - start); 
+  
+    	cout << "Time taken by function: "<< duration.count() << " microseconds" << endl; 
+
 	
 	}
 	else{
