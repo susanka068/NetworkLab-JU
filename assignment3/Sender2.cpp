@@ -5,7 +5,11 @@
 #else
 #include <unistd.h>
 #endif
+
+#include <chrono>
+
 using namespace std ;
+using namespace std::chrono ; 
 
 
 bool is_ffile_empty(std::fstream& pFile)
@@ -20,12 +24,51 @@ bool check_channel_status(fstream& ofs){
 	return flag=="" ; 
 }
 
+string framing(string payload){
+	// frame the data according to IEEE 802.3 frame format 
+	string frame = "" ; 
+
+	// preamble ( 7 byte )
+
+	string preamble = "1011011" ;
+	frame += preamble ; 
+
+	// of frame delimiter (SFD) ( 1 byte )
+
+	string sfd = "+" ; 
+	frame += sfd ; 
+
+	// Destination Address ( 11 byte  )
+
+
+	string destination_adress = "13.45.79.54" ; 
+	frame += destination_adress ; 
+
+	// source adress ( 11 byte  )
+
+
+	string source_adress = "13.56.79.90" ; 
+	frame += source_adress ;
+
+	// payload length ( 2 byte )
+
+	string length = "16" ; 
+	frame += length ; 
+
+	//  payload ( 16 byte )
+
+	frame += payload ; 
+
+	return frame ; 
+}
+
 void send(){
 
-	string data = "1010101011110101010" ; 
+	string data = "1010101011110101" ; 
+	string frame_packet = framing(data) ; 
 	FILE *fp ; 
 	fp = freopen("Channel.txt","a",stdout);
-	cout<<data ; 
+	cout<<frame_packet ; 
 	fclose(fp) ; 
 
 }
@@ -82,7 +125,7 @@ void non_persistent(){
 
 
 void p_persistent(){
-		fstream ofs ;
+	fstream ofs ;
 	while(true){
 
 				
@@ -133,8 +176,12 @@ bool detect_collision(){
 
 
 int main(){
-
-	p_persistent() ; 
+	// auto start = high_resolution_clock::now(); 
+	one_persistent() ; 
 	detect_collision() ; 
+	// auto stop = high_resolution_clock::now(); 
+	//  auto duration = duration_cast<microseconds>(stop - start); 
+ //    cout << "Time taken by function: " << duration.count() << " microseconds" << endl; 
+ //    cout<<"\nTime Elapsed: " << 1.0*clock() / CLOCKS_PER_SEC << " sec\n";
 	return 0 ; 
 }

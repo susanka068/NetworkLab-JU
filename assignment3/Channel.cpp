@@ -38,13 +38,38 @@ void transmitting_to_receiver(){
 	fclose(fp);
 }
 
+bool detect_collision(){
+	FILE *fp ; 
+	fp = freopen("Channel.txt" , "r" , stdin ) ; 
+	string check_flag ; 
+	cin>>check_flag ; 
+	if(check_flag.size() > 48)
+	{
+
+		cout<<"collision deteted\n" ;
+		clear_channel_buffer();
+		return true ;  
+	}
+
+	fclose(fp) ; 
+	cout<<"no collision deteted\n" ; 
+	transmitting_to_receiver() ;
+	sleep(2) ; 
+	clear_channel_buffer() ;
+	return false ;
+}
+
 int main(){
 	while(true){
 	// creating a non blocking thread 
-	sleep(2) ; 
 	listening_to_sender() ;
 	transmitting_to_receiver() ;
 	clear_channel_buffer();
+
+	//detect_collision();
+
+	
+	
 	}
 	return 0 ; 
 }
