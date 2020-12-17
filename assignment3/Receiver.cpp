@@ -1,4 +1,10 @@
 #include <bits/stdc++.h>
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 using namespace std ;
 
 void clear_channel_buffer(){

@@ -1,4 +1,11 @@
 #include <bits/stdc++.h>
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
+
 using namespace std ;
 
 string data_string ; 
@@ -32,8 +39,12 @@ void transmitting_to_receiver(){
 }
 
 int main(){
+	while(true){
+	// creating a non blocking thread 
+	sleep(2) ; 
 	listening_to_sender() ;
 	transmitting_to_receiver() ;
 	clear_channel_buffer();
+	}
 	return 0 ; 
 }
